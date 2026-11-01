@@ -4,8 +4,9 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
-from app import config, db
-from app.routes import entries, pages, settings
+from app import config, db, fmt
+from app.routes import entries, pages, recurring, settings, stats
+from app.services import recurring as recurring_service
 from app.templating import STATIC_DIR
 
 
@@ -17,6 +18,8 @@ def create_app() -> FastAPI:
             Path(url.removeprefix("sqlite:///")).parent.mkdir(parents=True, exist_ok=True)
         db.migrate(url)
         db.init_engine(url)
+        with db.session() as session:  # catch up on recurring bookings that fell due while down
+            recurring_service.generate(session, fmt.today())
         yield
 
     app = FastAPI(
@@ -31,6 +34,8 @@ def create_app() -> FastAPI:
     app.include_router(pages.router)
     app.include_router(entries.router)
     app.include_router(settings.router)
+    app.include_router(recurring.router)
+    app.include_router(stats.router)
     return app
 
 

@@ -59,6 +59,15 @@ def money(cents: int, sign: str = "") -> str:
     return f"{sign}{_group(abs(cents) // 100)},{abs(cents) % 100:02d} €"
 
 
+def money_signed(cents: int, plus: bool = True) -> str:
+    """Negative values get '−'; positive get '+' when `plus` (for deltas)."""
+    return money(cents, "−" if cents < 0 else ("+" if plus and cents > 0 else ""))
+
+
+def percent(value: float) -> str:
+    return f"{value:.1f}".replace(".", ",") + "\u00a0%"
+
+
 def date_de(d: date) -> str:
     return d.strftime("%d.%m.%Y")
 

@@ -1,3 +1,9 @@
-<div id="toast" class="toast" role="status" aria-live="polite">
-  <div class="toast-body"><span>{{ message }}</span></div>
+{#- Toast with optional undo. Vars: message, undo_url, oob (out-of-band swap). -#}
+<div id="toast" class="toast" role="status" aria-live="polite"{% if oob %} hx-swap-oob="true"{% endif %}>
+  <div class="toast-body">
+    <span>{{ message }}</span>
+    {% if undo_url %}
+    <button type="button" hx-post="{{ undo_url }}" hx-target="#toast" hx-swap="outerHTML">Rückgängig</button>
+    {% endif %}
+  </div>
 </div>

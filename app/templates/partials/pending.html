@@ -1,0 +1,38 @@
+{#- Pending recurring occurrences on the home screen. Vars: pending, oob. -#}
+{% macro pending_item(o) %}
+  {% set t = o.template %}
+  <li class="pending-item">
+    <span class="emoji" aria-hidden="true">{{ t.category.emoji if t.category else "⇄" }}</span>
+    <span class="row-main">
+      <span class="row-title">{{ t.name }}</span>
+      <span class="row-sub">
+        <span class="row-amount {{ t.type.value }}">{{ t.amount_cents|money("−" if t.type.value == "expense" else ("+" if t.type.value == "income" else "")) }}</span>
+        · {{ o.due_date|date_de }} · {{ t.account.name }}{% if t.to_account %} → {{ t.to_account.name }}{% endif %}
+      </span>
+    </span>
+    <span class="pending-actions">
+      <button type="button" class="icon-btn ok" hx-post="/recurring/occurrences/{{ o.id }}/confirm"
+              hx-target="#pending" hx-swap="outerHTML" aria-label="{{ t.name }} buchen" title="Buchen">✓</button>
+      <a class="icon-btn" href="/recurring/occurrences/{{ o.id }}" aria-label="{{ t.name }} bearbeiten und buchen" title="Bearbeiten">✎</a>
+      <button type="button" class="icon-btn" hx-post="/recurring/occurrences/{{ o.id }}/skip"
+              hx-target="#pending" hx-swap="outerHTML" aria-label="{{ t.name }} überspringen" title="Überspringen">✕</button>
+    </span>
+  </li>
+{% endmacro %}
+
+<section id="pending" class="pending"{% if oob %} hx-swap-oob="true"{% endif %}>
+  {% if pending %}
+  <h2>Fällig</h2>
+  <ul class="list">
+    {% for o in pending[:3] %}{{ pending_item(o) }}{% endfor %}
+  </ul>
+  {% if pending|length > 3 %}
+  <details class="more">
+    <summary>{{ pending|length - 3 }} weitere</summary>
+    <ul class="list">
+      {% for o in pending[3:] %}{{ pending_item(o) }}{% endfor %}
+    </ul>
+  </details>
+  {% endif %}
+  {% endif %}
+</section>

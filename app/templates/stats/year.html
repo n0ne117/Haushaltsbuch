@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% set tab = "stats" %}
+{% block title %}Statistik {{ title }} · Haushaltsbuch{% endblock %}
+{% block scripts %}
+<script src="{{ static('vendor/chart.umd.min.js') }}" defer></script>
+<script src="{{ static('stats.js') }}" defer></script>
+{% endblock %}
+{% block content %}
+{% include "stats/_header.html" %}
+{% include "stats/_totals.html" %}
+
+<div class="bars-wrap">
+  <canvas data-chart="bars" data-source="bars-data" role="img"
+          aria-label="Einnahmen, Ausgaben und Gespart pro Monat"></canvas>
+</div>
+<script type="application/json" id="bars-data">{{ bars|tojson }}</script>
+
+<details class="more">
+  <summary>Monatstabelle</summary>
+  <div class="table-scroll">
+    <table class="month-table">
+      <thead><tr><th>Monat</th><th>Einnahmen</th><th>Ausgaben</th><th>Gespart</th><th>Saldo</th></tr></thead>
+      <tbody>
+        {% for t in months %}
+        <tr>
+          <th><a href="{{ month_urls[loop.index0] }}">{{ month_names[loop.index0] }}</a></th>
+          <td>{{ t.einnahmen|money }}</td><td>{{ t.ausgaben|money }}</td>
+          <td>{{ t.gespart|money_signed(false) }}</td><td>{{ t.saldo|money_signed(false) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</details>
+
+{% include "stats/_shares.html" %}
+{% endblock %}

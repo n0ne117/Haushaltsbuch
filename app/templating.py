@@ -6,7 +6,7 @@ from fastapi import Request
 from fastapi.templating import Jinja2Templates
 
 from app import fmt
-from app.models import AccountKind, EntryType
+from app.models import AccountKind, Entry, EntryType
 
 STATIC_DIR = Path(__file__).parent / "static"
 
@@ -20,14 +20,24 @@ def static_url(path: str) -> str:
     return f"/static/{path}?v={digest}"
 
 
+def entry_summary(e: Entry) -> str:
+    """'−23,40 € · 🛒 Supermarkt' or '200,00 € · Girokonto → Depot' (for toasts)."""
+    sign = {EntryType.expense: "−", EntryType.income: "+"}.get(e.type, "")
+    where = f"{e.category.emoji} {e.category.name}" if e.category else f"{e.account.name} → {e.to_account.name}"
+    return f"{fmt.money(e.amount_cents, sign)} · {where}"
+
+
 templates.env.filters.update(
     money=fmt.money,
+    money_signed=fmt.money_signed,
     date_de=fmt.date_de,
     day_heading=fmt.day_heading,
     amount_input=fmt.amount_input,
+    percent=fmt.percent,
 )
 templates.env.globals.update(
     static=static_url,
+    entry_summary=entry_summary,
     EntryType=EntryType,
     TYPE_LABELS={
         EntryType.expense: "Ausgabe",

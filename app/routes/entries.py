@@ -1,17 +1,17 @@
-from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
 from urllib.parse import urlencode
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse
-from sqlalchemy import or_, select
-from sqlalchemy.orm import Session, joinedload, selectinload
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 from starlette.datastructures import FormData
 
 from app import fmt
 from app.db import get_db
-from app.models import Category, CategoryType, Entry, EntryType, Tag
-from app.services import lookups
+from app.models import CategoryType, Entry, EntryType
+from app.services import lookups, recurring
+from app.services.filters import ENTRY_LOAD_OPTIONS, EntryFilters
 from app.services.entries import EntryData, ValidationError, create_entry, update_entry
 from app.templating import is_htmx, render
 
@@ -126,7 +126,10 @@ def fresh_values(db: Session, request: Request, account_id: int | None = None) -
 
 @router.get("/")
 def home(request: Request, db: Session = Depends(get_db)):
-    return render(request, "home.html", **form_context(db, fresh_values(db, request)))
+    recurring.generate(db, fmt.today())
+    return render(
+        request, "home.html", pending=recurring.pending(db), **form_context(db, fresh_values(db, request))
+    )
 
 
 @router.post("/entries")
@@ -160,70 +163,37 @@ async def create(request: Request, db: Session = Depends(get_db)):
 @router.post("/entries/{entry_id:int}/undo")
 def undo(entry_id: int, request: Request, db: Session = Depends(get_db)):
     entry = db.get(Entry, entry_id)
-    message = "Rückgängig gemacht."
+    message, reverted = "Rückgängig gemacht.", None
     if entry is None:
         message = "Buchung existiert nicht mehr."
     elif datetime.now(UTC).replace(tzinfo=None) - entry.created_at > UNDO_WINDOW:
         message = "Zu spät – bitte in den Buchungen löschen."
     else:
+        reverted = recurring.unbook(db, entry)  # a confirmed recurring booking becomes pending again
         db.delete(entry)
         db.commit()
-    return render(request, "partials/toast.html", message=message)
+    return render(
+        request, "partials/undo_result.html", message=message,
+        pending=recurring.pending(db) if reverted else None,
+    )
 
 
 # --- List ----------------------------------------------------------------------
 
 
-@dataclass
-class ListFilters:
-    account_ids: list[int]
-    tag_ids: list[int]
-    q: str
-
-    @classmethod
-    def from_request(cls, request: Request) -> "ListFilters":
-        qp = request.query_params
-        return cls(
-            account_ids=[int(v) for v in qp.getlist("account") if v.isdigit()],
-            tag_ids=[int(v) for v in qp.getlist("tag") if v.isdigit()],
-            q=qp.get("q", "").strip(),
-        )
-
-    def params(self) -> list[tuple[str, str]]:
-        return (
-            [("account", str(a)) for a in self.account_ids]
-            + [("tag", str(t)) for t in self.tag_ids]
-            + ([("q", self.q)] if self.q else [])
-        )
-
-    @property
-    def active(self) -> bool:
-        return bool(self.account_ids or self.tag_ids or self.q)
-
-
-def query_entries(db: Session, f: ListFilters, offset: int, limit: int) -> list[Entry]:
+def query_entries(db: Session, f: EntryFilters, offset: int, limit: int) -> list[Entry]:
     stmt = (
         select(Entry)
-        .options(
-            joinedload(Entry.account),
-            joinedload(Entry.to_account),
-            joinedload(Entry.category).joinedload(Category.parent),
-            selectinload(Entry.tags),
-        )
+        .options(*ENTRY_LOAD_OPTIONS)
+        .where(*f.conditions())
         .order_by(Entry.date.desc(), Entry.id.desc())
         .offset(offset)
         .limit(limit)
     )
-    if f.account_ids:
-        stmt = stmt.where(or_(Entry.account_id.in_(f.account_ids), Entry.to_account_id.in_(f.account_ids)))
-    if f.tag_ids:
-        stmt = stmt.where(Entry.tags.any(Tag.id.in_(f.tag_ids)))
-    if f.q:
-        stmt = stmt.where(Entry.note.contains(f.q, autoescape=True))
     return list(db.scalars(stmt).unique())
 
 
-def rows_context(db: Session, f: ListFilters, offset: int, prev_date: date | None) -> dict:
+def rows_context(db: Session, f: EntryFilters, offset: int, prev_date: date | None) -> dict:
     entries = query_entries(db, f, offset, PAGE_SIZE + 1)
     next_url = None
     if len(entries) > PAGE_SIZE:
@@ -235,7 +205,7 @@ def rows_context(db: Session, f: ListFilters, offset: int, prev_date: date | Non
 
 @router.get("/entries")
 def entry_list(request: Request, db: Session = Depends(get_db)):
-    f = ListFilters.from_request(request)
+    f = EntryFilters.from_query(request.query_params)
     return render(
         request,
         "entries/list.html",
@@ -248,7 +218,7 @@ def entry_list(request: Request, db: Session = Depends(get_db)):
 
 @router.get("/entries/rows")
 def entry_rows(request: Request, db: Session = Depends(get_db)):
-    f = ListFilters.from_request(request)
+    f = EntryFilters.from_query(request.query_params)
     offset = _int_or_none(request.query_params.get("offset")) or 0
     try:
         prev_date = date.fromisoformat(request.query_params.get("prev", ""))

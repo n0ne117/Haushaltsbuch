@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% from "macros.html" import back %}
+{% set tab = "stats" %}
+{% block title %}{{ main.name }} {{ label }} · Haushaltsbuch{% endblock %}
+{% block content %}
+{{ back(back_url, "Statistik") }}
+<h1>{{ main.emoji }} {{ main.name }}</h1>
+<p class="hint">{{ label }} · {{ total|money }}{% if filters.active %} · gefiltert{% endif %}</p>
+
+{% if shares|length > 1 or (shares and shares[0].category.id != main.id) %}
+<ul class="list shares">
+  {% for s in shares %}
+  <li>
+    <div class="share-row">
+      <span class="share-name">{{ s.category.emoji }} {{ s.category.name if s.category.id != main.id else "Ohne Unterkategorie" }}</span>
+      <span class="share-pct">{{ s.pct|percent }}</span>
+      <span class="share-amt">{{ s.cents|money }}</span>
+    </div>
+    <div class="share-bar"><span style="width: {{ s.pct }}%; background: {{ main.color }}"></span></div>
+  </li>
+  {% endfor %}
+</ul>
+{% endif %}
+
+<h2>Buchungen</h2>
+<div class="entry-list">
+  {% with prev_date=none, next_url=none, offset=0 %}{% include "entries/_rows.html" %}{% endwith %}
+</div>
+{% endblock %}

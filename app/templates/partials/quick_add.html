@@ -1,95 +1,10 @@
 {#- Entry form, used by quick add (HTMX, swaps itself) and the edit page (plain POST). -#}
-{% from "macros.html" import err %}
 {% set edit = edit | default(false) %}
 <form id="entry-form" class="entry-form" data-entry-form method="post"
       action="{{ action | default('/entries') }}" autocomplete="off"
       {% if not edit %}hx-post="/entries" hx-swap="outerHTML"{% endif %}>
 
-  <div class="segmented" role="radiogroup" aria-label="Buchungsart">
-    {% for t in [EntryType.expense, EntryType.income, EntryType.transfer] %}
-    <label><input type="radio" name="type" value="{{ t.value }}" {% if values.type == t.value %}checked{% endif %}>
-      <span>{{ TYPE_LABELS[t] }}</span></label>
-    {% endfor %}
-  </div>
+  {% include "partials/entry_fields.html" %}
 
-  <label class="amount">
-    <input name="amount" inputmode="decimal" placeholder="0,00" value="{{ values.amount }}"
-           aria-label="Betrag" enterkeyhint="done" required {% if not edit %}autofocus{% endif %}>
-    <span aria-hidden="true">€</span>
-  </label>
-  {{ err(errors, "amount") }}
-
-  {% for type, tree in [("expense", expense_tree), ("income", income_tree)] %}
-  <div class="categories" data-show-for="{{ type }}" {% if values.type != type %}hidden{% endif %}>
-    <div class="tiles">
-      {% for main, subs in tree %}
-      <label class="tile" data-main="{{ main.id }}">
-        <input type="radio" name="category_id" value="{{ main.id }}"
-               {% if values.category_id == main.id|string %}checked{% endif %}>
-        <span class="emoji">{{ main.emoji }}</span><span class="name">{{ main.name }}</span>
-      </label>
-      {% endfor %}
-    </div>
-    {% for main, subs in tree if subs %}
-    <div class="tiles subrow" data-parent="{{ main.id }}" hidden>
-      {% for sub in subs %}
-      <label class="tile small">
-        <input type="radio" name="category_id" value="{{ sub.id }}" data-parent="{{ main.id }}"
-               {% if values.category_id == sub.id|string %}checked{% endif %}>
-        <span class="emoji">{{ sub.emoji }}</span><span class="name">{{ sub.name }}</span>
-      </label>
-      {% endfor %}
-    </div>
-    {% endfor %}
-  </div>
-  {% endfor %}
-  {{ err(errors, "category_id") }}
-
-  <fieldset class="chips-field">
-    <legend><span data-show-for="expense income" {% if values.type == "transfer" %}hidden{% endif %}>Konto</span><span
-      data-show-for="transfer" {% if values.type != "transfer" %}hidden{% endif %}>Von</span></legend>
-    <div class="chips">
-      {% for a in accounts %}
-      <label class="chip"><input type="radio" name="account_id" value="{{ a.id }}"
-        {% if values.account_id == a.id|string %}checked{% endif %}><span>{{ a.name }}</span></label>
-      {% endfor %}
-    </div>
-    {{ err(errors, "account_id") }}
-  </fieldset>
-
-  <fieldset class="chips-field" data-show-for="transfer" {% if values.type != "transfer" %}hidden{% endif %}>
-    <legend>Nach</legend>
-    <div class="chips">
-      {% for a in accounts %}
-      <label class="chip"><input type="radio" name="to_account_id" value="{{ a.id }}"
-        {% if values.to_account_id == a.id|string %}checked{% endif %}><span>{{ a.name }}</span></label>
-      {% endfor %}
-    </div>
-    {{ err(errors, "to_account_id") }}
-  </fieldset>
-
-  <details class="more" {% if edit or errors.get("date") or errors.get("tags") %}open{% endif %}>
-    <summary>Mehr</summary>
-    <label class="field">Datum
-      <input type="date" name="date" value="{{ values.date }}" required>
-    </label>
-    {{ err(errors, "date") }}
-    <label class="field">Notiz
-      <input type="text" name="note" value="{{ values.note }}" maxlength="500">
-    </label>
-    {% if tags %}
-    <fieldset class="chips-field">
-      <legend>Tags</legend>
-      <div class="chips">
-        {% for t in tags %}
-        <label class="chip"><input type="checkbox" name="tags" value="{{ t.id }}"
-          {% if t.id in values.tag_ids %}checked{% endif %}><span>#{{ t.name }}</span></label>
-        {% endfor %}
-      </div>
-      {{ err(errors, "tags") }}
-    </fieldset>
-    {% endif %}
-  </details>
-
-  <button class="btn primary block" type="submit">Speichern</button>
+  <button class="btn primary block" type="submit">{{ submit_label | default("Speichern") }}</button>
 </form>

@@ -1,0 +1,16 @@
+{#- Summary cards. Vars: totals, optional delta + delta_label, optional keys. -#}
+{% set cards = [
+  ("einnahmen", "Einnahmen", "income"),
+  ("ausgaben", "Ausgaben", "expense"),
+  ("gespart", "Gespart", "saved"),
+  ("saldo", "Saldo", "saldo"),
+] %}
+<div class="cards">
+  {% for key, label, cls in cards if not keys or key in keys %}
+  <div class="card {{ cls }}">
+    <span class="card-label">{{ label }}</span>
+    <span class="card-value">{{ totals[key]|money_signed(false) }}</span>
+    {% if delta %}<span class="card-delta">{{ delta[key]|money_signed }} {{ delta_label }}</span>{% endif %}
+  </div>
+  {% endfor %}
+</div>

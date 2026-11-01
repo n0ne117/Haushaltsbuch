@@ -1,0 +1,4 @@
+{% with undo_url=none, oob=false %}{% include "partials/toast.html" %}{% endwith %}
+{% if pending is not none %}
+  {% with oob=true %}{% include "partials/pending.html" %}{% endwith %}
+{% endif %}

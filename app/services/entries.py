@@ -23,6 +23,7 @@ class EntryData:
     category_id: int | None = None
     note: str | None = None
     tag_ids: list[int] = field(default_factory=list)
+    recurring_id: int | None = None
 
 
 def validate(db: Session, data: EntryData) -> None:
@@ -70,12 +71,15 @@ def _apply(db: Session, entry: Entry, data: EntryData) -> None:
     entry.tags = list(db.scalars(select(Tag).where(Tag.id.in_(data.tag_ids)))) if data.tag_ids else []
 
 
-def create_entry(db: Session, data: EntryData) -> Entry:
+def create_entry(db: Session, data: EntryData, commit: bool = True) -> Entry:
     validate(db, data)
-    entry = Entry()
+    entry = Entry(recurring_id=data.recurring_id)
     _apply(db, entry, data)
     db.add(entry)
-    db.commit()
+    if commit:
+        db.commit()
+    else:
+        db.flush()
     return entry
 
 

@@ -17,10 +17,8 @@ def client(tmp_path, monkeypatch):
 
 @pytest.fixture
 def db(client):
-    gen = app_db.get_db()
-    session = next(gen)
-    yield session
-    gen.close()
+    with app_db.session() as session:
+        yield session
 
 
 @pytest.fixture

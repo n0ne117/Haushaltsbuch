@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% from "macros.html" import back %}
+{% set tab = "add" %}
+{% block title %}{{ occ.template.name }} buchen · Haushaltsbuch{% endblock %}
+{% block content %}
+{{ back("/", "Erfassen") }}
+<h1>{{ occ.template.name }} buchen</h1>
+<p class="hint">Fällig am {{ occ.due_date|date_de }}. Änderungen gelten nur für diese Buchung, nicht für den Dauerauftrag.</p>
+{% with action="/recurring/occurrences/%d" % occ.id, edit=true, submit_label="Buchen" %}
+  {% include "partials/quick_add.html" %}
+{% endwith %}
+{% endblock %}

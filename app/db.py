@@ -37,7 +37,11 @@ def migrate(url: str) -> None:
     command.upgrade(cfg, "head")
 
 
-def get_db() -> Iterator[Session]:
+def session() -> Session:
     assert _session_factory is not None, "init_engine() not called"
-    with _session_factory() as session:
-        yield session
+    return _session_factory()
+
+
+def get_db() -> Iterator[Session]:
+    with session() as s:
+        yield s

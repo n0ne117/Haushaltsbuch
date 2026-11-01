@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "macros.html" import filter_chips %}
 {% set tab = "entries" %}
 {% block title %}Buchungen · Haushaltsbuch{% endblock %}
 {% block content %}
@@ -9,26 +10,7 @@
   <input id="q" type="search" name="q" value="{{ filters.q }}" placeholder="In Notizen suchen …" aria-label="Suche">
   <details {% if filters.account_ids or filters.tag_ids %}open{% endif %}>
     <summary>Filter</summary>
-    <fieldset class="chips-field">
-      <legend>Konten</legend>
-      <div class="chips">
-        {% for a in accounts %}
-        <label class="chip"><input type="checkbox" name="account" value="{{ a.id }}"
-          {% if a.id in filters.account_ids %}checked{% endif %}><span>{{ a.name }}</span></label>
-        {% endfor %}
-      </div>
-    </fieldset>
-    {% if tags %}
-    <fieldset class="chips-field">
-      <legend>Tags</legend>
-      <div class="chips">
-        {% for t in tags %}
-        <label class="chip"><input type="checkbox" name="tag" value="{{ t.id }}"
-          {% if t.id in filters.tag_ids %}checked{% endif %}><span>#{{ t.name }}</span></label>
-        {% endfor %}
-      </div>
-    </fieldset>
-    {% endif %}
+    {{ filter_chips(accounts, tags, filters) }}
     <noscript><button class="btn" type="submit">Anwenden</button></noscript>
   </details>
 </form>

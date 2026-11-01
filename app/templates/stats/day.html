@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% set tab = "stats" %}
+{% block title %}Statistik {{ day|date_de }} · Haushaltsbuch{% endblock %}
+{% block scripts %}<script src="{{ static('stats.js') }}" defer></script>{% endblock %}
+{% block content %}
+{% include "stats/_header.html" %}
+{% with keys=["einnahmen", "ausgaben"] %}{% include "stats/_totals.html" %}{% endwith %}
+<div class="entry-list">
+  {% with prev_date=day, next_url=none, offset=0 %}{% include "entries/_rows.html" %}{% endwith %}
+</div>
+{% endblock %}

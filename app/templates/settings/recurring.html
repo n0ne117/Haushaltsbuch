@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% from "macros.html" import back %}
+{% set tab = "settings" %}
+{% block title %}Daueraufträge · Haushaltsbuch{% endblock %}
+{% block content %}
+{{ back("/settings", "Einstellungen") }}
+<h1>Daueraufträge</h1>
+<p class="hint">Fällige Buchungen erscheinen unter „Erfassen“ und werden erst gebucht, wenn du sie bestätigst.</p>
+<ul class="list">
+  {% for t, schedule, next in rows %}
+  <li {% if not t.active %}class="archived"{% endif %}>
+    <a href="/settings/recurring/{{ t.id }}">
+      <span class="row-title">{{ t.category.emoji if t.category else "⇄" }} {{ t.name }}</span>
+      <span class="row-sub">{{ t.amount_cents|money }} · {{ schedule }}
+        {%- if not t.active %} · pausiert{% elif next %} · nächste {{ next|date_de }}{% else %} · beendet{% endif %}</span>
+    </a>
+  </li>
+  {% else %}
+  <li class="empty">Noch keine Daueraufträge.</li>
+  {% endfor %}
+</ul>
+<a class="btn block" href="/settings/recurring/new">+ Neuer Dauerauftrag</a>
+{% endblock %}

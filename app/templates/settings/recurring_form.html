@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% from "macros.html" import back, err %}
+{% set tab = "settings" %}
+{% block title %}Dauerauftrag · Haushaltsbuch{% endblock %}
+{% block content %}
+{{ back("/settings/recurring", "Daueraufträge") }}
+<h1>{{ "Dauerauftrag bearbeiten" if template else "Neuer Dauerauftrag" }}</h1>
+<form method="post" action="/settings/recurring/{{ template.id if template else 'new' }}"
+      class="entry-form" data-entry-form autocomplete="off">
+  <label class="field">Name
+    <input name="name" value="{{ values.name }}" required maxlength="100" placeholder="z. B. Miete, ETF-Sparplan"
+           {% if not template %}autofocus{% endif %}>
+  </label>
+  {{ err(errors, "name") }}
+
+  {% with edit=true, show_date=false %}{% include "partials/entry_fields.html" %}{% endwith %}
+
+  <h2>Rhythmus</h2>
+  <div class="row-fields">
+    <label class="field grow">Wiederholung
+      <select name="frequency" data-frequency>
+        {% for f, label in frequencies.items() %}
+        <option value="{{ f.value }}" {% if values.frequency == f.value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label class="field" data-freq-for="monthly quarterly yearly" {% if values.frequency == "weekly" %}hidden{% endif %}>Am Tag
+      <input name="day" type="number" min="1" max="31" inputmode="numeric" value="{{ values.day }}">
+    </label>
+    <label class="field" data-freq-for="weekly" {% if values.frequency != "weekly" %}hidden{% endif %}>Am
+      <select name="weekday">
+        {% for w in weekdays %}
+        <option value="{{ loop.index0 }}" {% if values.weekday == loop.index0|string %}selected{% endif %}>{{ w }}</option>
+        {% endfor %}
+      </select>
+    </label>
+  </div>
+  {{ err(errors, "frequency") }}{{ err(errors, "day") }}
+  <p class="hint" data-freq-for="monthly quarterly yearly" {% if values.frequency == "weekly" %}hidden{% endif %}>
+    Gibt es den Tag im Monat nicht (z. B. 31.), wird der letzte Tag des Monats verwendet.
+    Quartalsweise und jährlich zählen ab dem Monat des Startdatums.</p>
+
+  <div class="row-fields">
+    <label class="field grow">Ab
+      <input type="date" name="start_date" value="{{ values.start_date }}" required>
+    </label>
+    <label class="field grow">Bis <small>(optional)</small>
+      <input type="date" name="end_date" value="{{ values.end_date }}">
+    </label>
+  </div>
+  {{ err(errors, "start_date") }}{{ err(errors, "end_date") }}
+
+  <label class="check"><input type="checkbox" name="active" {% if values.active %}checked{% endif %}> Aktiv</label>
+
+  <button class="btn primary block" type="submit">Speichern</button>
+</form>
+{% if template %}
+<form method="post" action="/settings/recurring/{{ template.id }}/delete"
+      data-confirm="Dauerauftrag „{{ template.name }}“ löschen? Bereits gebuchte Einträge bleiben erhalten.">
+  <button class="btn danger block" type="submit">Löschen</button>
+</form>
+{% endif %}
+{% endblock %}

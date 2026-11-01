@@ -18,7 +18,3 @@ def health(db: Session = Depends(get_db)):
 def help_page(request: Request):
     return render(request, "help.html")
 
-
-@router.get("/stats")
-def stats(request: Request):
-    return render(request, "stats.html")

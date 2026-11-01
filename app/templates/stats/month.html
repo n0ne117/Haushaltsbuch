@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% set tab = "stats" %}
+{% block title %}Statistik {{ title }} · Haushaltsbuch{% endblock %}
+{% block scripts %}
+<script src="{{ static('vendor/chart.umd.min.js') }}" defer></script>
+<script src="{{ static('stats.js') }}" defer></script>
+{% endblock %}
+{% block content %}
+{% include "stats/_header.html" %}
+{% include "stats/_totals.html" %}
+{% include "stats/_shares.html" %}
+{% endblock %}

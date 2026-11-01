@@ -21,9 +21,19 @@ function syncSubrows(form) {
   );
 }
 
+// Recurring template form: show the day field matching the selected frequency.
+function syncFrequency(form) {
+  const select = form.querySelector("select[data-frequency]");
+  if (!select) return;
+  form.querySelectorAll("[data-freq-for]").forEach((el) => {
+    el.hidden = !el.dataset.freqFor.split(" ").includes(select.value);
+  });
+}
+
 function initEntryForm(form) {
   syncType(form);
   syncSubrows(form);
+  syncFrequency(form);
 }
 
 document.addEventListener("change", (e) => {
@@ -31,6 +41,13 @@ document.addEventListener("change", (e) => {
   if (!form || !form.matches("[data-entry-form]")) return;
   if (e.target.name === "type") syncType(form);
   if (e.target.name === "type" || e.target.name === "category_id") syncSubrows(form);
+  if (e.target.name === "frequency") syncFrequency(form);
+});
+
+// Forms with data-autosubmit reload on every change (statistics filters).
+document.addEventListener("change", (e) => {
+  const form = e.target.form;
+  if (form && form.hasAttribute("data-autosubmit")) form.requestSubmit();
 });
 
 // Forms with data-confirm ask before submitting (deletes).

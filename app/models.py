@@ -152,6 +152,9 @@ class RecurringTemplate(Base):
     end_date: Mapped[date | None] = mapped_column(Date)
     active: Mapped[bool] = mapped_column(default=True)
 
+    account: Mapped[Account] = relationship(foreign_keys=[account_id])
+    to_account: Mapped[Account | None] = relationship(foreign_keys=[to_account_id])
+    category: Mapped[Category | None] = relationship()
     tags: Mapped[list[Tag]] = relationship(secondary=recurring_tags, order_by=Tag.name)
 
     __table_args__ = (CheckConstraint("amount_cents > 0", name="amount_positive"),)
@@ -202,5 +205,7 @@ class RecurringOccurrence(Base):
         _enum(OccurrenceStatus), default=OccurrenceStatus.pending
     )
     entry_id: Mapped[int | None] = mapped_column(ForeignKey("entries.id", ondelete="SET NULL"))
+
+    template: Mapped[RecurringTemplate] = relationship()
 
     __table_args__ = (UniqueConstraint("recurring_id", "due_date"),)

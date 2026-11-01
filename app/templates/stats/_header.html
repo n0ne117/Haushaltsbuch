@@ -1,0 +1,28 @@
+{% from "macros.html" import filter_chips %}
+<nav class="segmented links" aria-label="Ansicht">
+  <a href="{{ url('/stats/month') }}" {% if view_name == "month" %}aria-current="page"{% endif %}>Monat</a>
+  <a href="{{ url('/stats/year') }}" {% if view_name == "year" %}aria-current="page"{% endif %}>Jahr</a>
+  <a href="{{ url('/stats/day') }}" {% if view_name == "day" %}aria-current="page"{% endif %}>Tag</a>
+</nav>
+
+<div class="period-switch" data-swipe-prev="{{ prev_url }}" data-swipe-next="{{ next_url }}">
+  <a class="icon-btn" href="{{ prev_url }}" rel="prev" aria-label="Zurück">‹</a>
+  <h1>{{ title }}</h1>
+  <a class="icon-btn" href="{{ next_url }}" rel="next" aria-label="Weiter">›</a>
+</div>
+
+<form class="filters" method="get" data-autosubmit>
+  {% for k, v in period.items() if not (view_name == "day" and k == "d") %}<input type="hidden" name="{{ k }}" value="{{ v }}">{% endfor %}
+  <input type="hidden" name="kind" value="{{ kind }}">
+  {% if view_name == "day" %}
+  <label class="field">Datum <input type="date" name="d" value="{{ day.isoformat() }}"></label>
+  {% endif %}
+  <details {% if filters.active %}open{% endif %}>
+    <summary>Filter{% if filters.active %} · aktiv{% endif %}</summary>
+    {{ filter_chips(accounts, tags, filters) }}
+    {% if filters.active %}
+    <a class="reset" href="?{% for k, v in period.items() %}{{ k }}={{ v }}&amp;{% endfor %}kind={{ kind }}">Filter zurücksetzen</a>
+    {% endif %}
+    <noscript><button class="btn" type="submit">Anwenden</button></noscript>
+  </details>
+</form>

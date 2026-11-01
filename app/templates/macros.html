@@ -11,3 +11,26 @@
   {%- elif e.type == EntryType.income -%}{{ e.amount_cents|money("+") }}
   {%- else -%}{{ e.amount_cents|money }}{%- endif -%}
 {%- endmacro %}
+
+{% macro filter_chips(accounts, tags, filters) -%}
+  <fieldset class="chips-field">
+    <legend>Konten</legend>
+    <div class="chips">
+      {% for a in accounts %}
+      <label class="chip"><input type="checkbox" name="account" value="{{ a.id }}"
+        {% if a.id in filters.account_ids %}checked{% endif %}><span>{{ a.name }}</span></label>
+      {% endfor %}
+    </div>
+  </fieldset>
+  {% if tags %}
+  <fieldset class="chips-field">
+    <legend>Tags</legend>
+    <div class="chips">
+      {% for t in tags %}
+      <label class="chip"><input type="checkbox" name="tag" value="{{ t.id }}"
+        {% if t.id in filters.tag_ids %}checked{% endif %}><span>#{{ t.name }}</span></label>
+      {% endfor %}
+    </div>
+  </fieldset>
+  {% endif %}
+{%- endmacro %}

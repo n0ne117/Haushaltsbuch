@@ -1,0 +1,30 @@
+{#- Category breakdown: kind toggle, donut, sorted list. Vars: shares, chart, drill, kind, kind_urls. -#}
+<nav class="segmented links small" aria-label="Aufteilung">
+  <a href="{{ kind_urls.expense }}" {% if kind == "expense" %}aria-current="page"{% endif %}>Ausgaben</a>
+  <a href="{{ kind_urls.income }}" {% if kind == "income" %}aria-current="page"{% endif %}>Einnahmen</a>
+</nav>
+{% if shares %}
+<div class="donut-wrap">
+  <canvas data-chart="donut" data-source="donut-data" role="img"
+          aria-label="Aufteilung nach Kategorien"></canvas>
+  <div class="donut-center">
+    <span>{{ "Ausgaben" if kind == "expense" else "Einnahmen" }}</span>
+    <strong>{{ shares|sum(attribute="cents")|money }}</strong>
+  </div>
+</div>
+<script type="application/json" id="donut-data">{{ chart|tojson }}</script>
+<ul class="list shares">
+  {% for s in shares %}
+  <li>
+    <a href="{{ drill(s.category) }}">
+      <span class="swatch" style="background: {{ s.category.color }}"></span>
+      <span class="share-name">{{ s.category.emoji }} {{ s.category.name }}</span>
+      <span class="share-pct">{{ s.pct|percent }}</span>
+      <span class="share-amt">{{ s.cents|money }}</span>
+    </a>
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<p class="empty">Keine {{ "Ausgaben" if kind == "expense" else "Einnahmen" }} in diesem Zeitraum.</p>
+{% endif %}
