@@ -1,0 +1,12 @@
+services:
+  haushaltsbuch:
+    build: .
+    container_name: haushaltsbuch
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - TZ=Europe/Vienna
+      - BACKUP_KEEP_DAYS=14
+    volumes:
+      - /mnt/user/appdata/haushaltsbuch:/data

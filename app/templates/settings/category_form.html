@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% from "macros.html" import back, err %}
+{% set tab = "settings" %}
+{% block title %}Kategorie · Haushaltsbuch{% endblock %}
+{% block content %}
+{{ back("/settings/categories", "Kategorien") }}
+<h1>{{ "Kategorie bearbeiten" if category else "Neue Kategorie" }}</h1>
+<form method="post" action="/settings/categories/{{ category.id if category else 'new' }}" class="stack">
+  <div class="row-fields">
+    <label class="field emoji-field">Emoji
+      <input name="emoji" value="{{ values.emoji }}" maxlength="8">
+    </label>
+    <label class="field grow">Name
+      <input name="name" value="{{ values.name }}" required maxlength="100" {% if not category %}autofocus{% endif %}>
+    </label>
+  </div>
+  {{ err(errors, "name") }}{{ err(errors, "emoji") }}
+
+  <label class="field">Gehört zu
+    <select name="parent_id">
+      <option value="">— Hauptkategorie —</option>
+      {% for p in parents %}
+      <option value="{{ p.id }}" {% if values.parent_id == p.id|string %}selected{% endif %}>
+        {{ p.emoji }} {{ p.name }} ({{ "Einnahme" if p.type.value == "income" else "Ausgabe" }})</option>
+      {% endfor %}
+    </select>
+  </label>
+  {{ err(errors, "parent_id") }}
+
+  <fieldset class="chips-field">
+    <legend>Art <small>(Unterkategorien übernehmen die Art der Hauptkategorie)</small></legend>
+    <div class="segmented">
+      <label><input type="radio" name="type" value="expense" {% if values.type == "expense" %}checked{% endif %}><span>Ausgabe</span></label>
+      <label><input type="radio" name="type" value="income" {% if values.type == "income" %}checked{% endif %}><span>Einnahme</span></label>
+    </div>
+  </fieldset>
+  {{ err(errors, "type") }}
+
+  <label class="field">Farbe (Diagramme)
+    <input type="color" name="color" value="{{ values.color }}">
+  </label>
+  {{ err(errors, "color") }}
+
+  {% if category %}
+  <label class="check"><input type="checkbox" name="archived" {% if values.archived %}checked{% endif %}>
+    Archiviert <small>(nicht mehr auswählbar, bleibt in der Historie)</small></label>
+  {% endif %}
+  <button class="btn primary block" type="submit">Speichern</button>
+</form>
+{% if category %}
+  {{ err(errors, "delete") }}
+  {% if in_use %}
+  <p class="hint">Diese Kategorie wird verwendet und kann nur archiviert werden.</p>
+  {% elif category.children %}
+  <p class="hint">Hat Unterkategorien – diese zuerst löschen oder verschieben.</p>
+  {% else %}
+  <form method="post" action="/settings/categories/{{ category.id }}/delete" data-confirm="Kategorie „{{ category.name }}“ löschen?">
+    <button class="btn danger block" type="submit">Löschen</button>
+  </form>
+  {% endif %}
+{% endif %}
+{% endblock %}

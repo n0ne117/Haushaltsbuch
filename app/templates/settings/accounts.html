@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% from "macros.html" import back %}
+{% set tab = "settings" %}
+{% block title %}Konten · Haushaltsbuch{% endblock %}
+{% block scripts %}<script src="{{ static('vendor/Sortable.min.js') }}" defer></script>{% endblock %}
+{% block content %}
+{{ back("/settings", "Einstellungen") }}
+<h1>Konten</h1>
+<ul class="list" data-sortable data-reorder-url="/settings/accounts/reorder">
+  {% for a in accounts %}
+  <li data-id="{{ a.id }}" {% if a.archived %}class="archived"{% endif %}>
+    <span class="handle" aria-label="Verschieben">⠿</span>
+    <a href="/settings/accounts/{{ a.id }}">
+      <span class="row-title">{{ a.name }}</span>
+      <span class="row-sub">{{ KIND_LABELS[a.kind] }}{% if a.owner %} · {{ a.owner }}{% endif %}
+        {%- if a.archived %} · archiviert{% endif %}</span>
+    </a>
+  </li>
+  {% endfor %}
+</ul>
+<a class="btn block" href="/settings/accounts/new">+ Neues Konto</a>
+{% endblock %}

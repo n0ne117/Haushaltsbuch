@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% from "macros.html" import back %}
+{% set tab = "settings" %}
+{% block title %}Kategorien · Haushaltsbuch{% endblock %}
+{% block scripts %}<script src="{{ static('vendor/Sortable.min.js') }}" defer></script>{% endblock %}
+{% block content %}
+{{ back("/settings", "Einstellungen") }}
+<h1>Kategorien</h1>
+<p class="hint">Zum Sortieren am ⠿ ziehen. Verwendete Kategorien können nur archiviert werden.</p>
+
+{% for type, title, tree in [("expense", "Ausgaben", expense_tree), ("income", "Einnahmen", income_tree)] %}
+<h2>{{ title }}</h2>
+<ul class="list" data-sortable data-handle=".handle-main" data-reorder-url="/settings/categories/reorder">
+  {% for main, subs in tree %}
+  <li data-id="{{ main.id }}" class="cat {% if main.archived %}archived{% endif %}">
+    <div class="cat-row">
+      <span class="handle handle-main" aria-label="Verschieben">⠿</span>
+      <a href="/settings/categories/{{ main.id }}">
+        <span class="swatch" style="background: {{ main.color }}"></span>
+        <span class="row-title">{{ main.emoji }} {{ main.name }}</span>
+        {% if main.archived %}<span class="row-sub">archiviert</span>{% endif %}
+      </a>
+      <a class="add-sub" href="/settings/categories/new?parent={{ main.id }}" aria-label="Unterkategorie zu {{ main.name }} hinzufügen">+</a>
+    </div>
+    {% if subs %}
+    <ul class="list sub" data-sortable data-reorder-url="/settings/categories/reorder">
+      {% for sub in subs %}
+      <li data-id="{{ sub.id }}" {% if sub.archived %}class="archived"{% endif %}>
+        <span class="handle" aria-label="Verschieben">⠿</span>
+        <a href="/settings/categories/{{ sub.id }}">
+          <span class="row-title">{{ sub.emoji }} {{ sub.name }}</span>
+          {% if sub.archived %}<span class="row-sub">archiviert</span>{% endif %}
+        </a>
+      </li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+  </li>
+  {% endfor %}
+</ul>
+<a class="btn block" href="/settings/categories/new?type={{ type }}">+ Neue Kategorie ({{ title }})</a>
+{% endfor %}
+{% endblock %}

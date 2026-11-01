@@ -1,0 +1,25 @@
+{% from "macros.html" import entry_amount %}
+{% for e in entries %}
+  {% set prev = prev_date if loop.first else loop.previtem.date %}
+  {% if e.date != prev %}<h2 class="day">{{ e.date|day_heading }}</h2>{% endif %}
+  <a class="row" href="/entries/{{ e.id }}">
+    <span class="emoji" aria-hidden="true">{{ e.category.emoji if e.category else "⇄" }}</span>
+    <span class="row-main">
+      {% if e.category %}
+        <span class="row-title">{{ e.category.label }}</span>
+        <span class="row-sub">{{ e.account.name }}{% if e.note %} · {{ e.note }}{% endif %}
+          {%- for t in e.tags %} <span class="tag">#{{ t.name }}</span>{% endfor %}</span>
+      {% else %}
+        <span class="row-title">{{ e.account.name }} → {{ e.to_account.name }}</span>
+        <span class="row-sub">Umbuchung{% if e.note %} · {{ e.note }}{% endif %}
+          {%- for t in e.tags %} <span class="tag">#{{ t.name }}</span>{% endfor %}</span>
+      {% endif %}
+    </span>
+    <span class="row-amount {{ e.type.value }}">{{ entry_amount(e) }}</span>
+  </a>
+{% endfor %}
+{% if next_url %}
+  <div class="sentinel" hx-get="{{ next_url }}" hx-trigger="revealed" hx-swap="outerHTML">Lade …</div>
+{% elif offset == 0 and not entries %}
+  <p class="empty">Keine Buchungen gefunden.</p>
+{% endif %}

@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% from "macros.html" import back, err %}
+{% set tab = "settings" %}
+{% block title %}Konto · Haushaltsbuch{% endblock %}
+{% block content %}
+{{ back("/settings/accounts", "Konten") }}
+<h1>{{ "Konto bearbeiten" if account else "Neues Konto" }}</h1>
+<form method="post" action="/settings/accounts/{{ account.id if account else 'new' }}" class="stack">
+  <label class="field">Name
+    <input name="name" value="{{ values.name }}" required maxlength="100" {% if not account %}autofocus{% endif %}>
+  </label>
+  {{ err(errors, "name") }}
+  <label class="field">Inhaber/in <small>(optional, z. B. „Gemeinsam“)</small>
+    <input name="owner" value="{{ values.owner }}" maxlength="100">
+  </label>
+  <label class="field">Art
+    <select name="kind">
+      {% for k in kinds %}
+      <option value="{{ k.value }}" {% if values.kind == k.value %}selected{% endif %}>{{ KIND_LABELS[k] }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  {{ err(errors, "kind") }}
+  <p class="hint">Einzahlungen auf Konten der Art „Sparen / Depot“ zählen als <em>Gespart</em>.</p>
+  {% if account %}
+  <label class="check"><input type="checkbox" name="archived" {% if values.archived %}checked{% endif %}>
+    Archiviert <small>(nicht mehr auswählbar, bleibt in der Historie)</small></label>
+  {% endif %}
+  <button class="btn primary block" type="submit">Speichern</button>
+</form>
+{% if account %}
+  {{ err(errors, "delete") }}
+  {% if in_use %}
+  <p class="hint">Dieses Konto wird verwendet und kann nur archiviert werden.</p>
+  {% else %}
+  <form method="post" action="/settings/accounts/{{ account.id }}/delete" data-confirm="Konto „{{ account.name }}“ löschen?">
+    <button class="btn danger block" type="submit">Löschen</button>
+  </form>
+  {% endif %}
+{% endif %}
+{% endblock %}

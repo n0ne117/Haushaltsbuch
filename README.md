@@ -2,7 +2,28 @@
 
 A deliberately simple, self-hosted income/expense tracker for one household. Mobile-first PWA, manual entry only, one Docker container.
 
-See [docs/SPEC.md](docs/SPEC.md) for the full specification. Setup instructions follow with milestone M5.
+See [docs/SPEC.md](docs/SPEC.md) for the full specification.
+
+## Run (Unraid)
+
+```bash
+mkdir -p /mnt/user/appdata/haushaltsbuch
+chown 99:100 /mnt/user/appdata/haushaltsbuch
+docker compose -f /path/to/Haushaltsbuch/docker-compose.yml up -d --build
+```
+
+The app listens on port 8080 and stores its database at `/mnt/user/appdata/haushaltsbuch/haushaltsbuch.db`. It has no login; restrict access in the reverse proxy (LAN + WireGuard only). Migrations and seed data run automatically on start.
+
+## Development
+
+```bash
+python3 -m venv .venv
+.venv/bin/pip install -r requirements-dev.txt
+.venv/bin/pytest
+DATA_DIR=./data .venv/bin/uvicorn app.main:app --reload --port 8080
+```
+
+Schema changes: edit `app/models.py`, then `.venv/bin/alembic revision --autogenerate -m "…"` and review the generated file in `app/migrations/versions/`.
 
 ## Privacy – no financial data in this repository
 

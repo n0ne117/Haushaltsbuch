@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% from "macros.html" import back, err %}
+{% set tab = "settings" %}
+{% block title %}Tags · Haushaltsbuch{% endblock %}
+{% block content %}
+{{ back("/settings", "Einstellungen") }}
+<h1>Tags</h1>
+<form method="post" action="/settings/tags/new" class="inline-form">
+  <input name="name" placeholder="Neues Tag" required maxlength="100" aria-label="Neues Tag">
+  <button class="btn primary" type="submit">Hinzufügen</button>
+</form>
+{{ err(errors, "new") }}
+
+<ul class="list">
+  {% for t in tags %}
+  <li class="tag-item">
+    <form method="post" action="/settings/tags/{{ t.id }}" class="inline-form">
+      <input name="name" value="{{ t.name }}" required maxlength="100" aria-label="Name">
+      <button class="btn" type="submit">Speichern</button>
+    </form>
+    <form method="post" action="/settings/tags/{{ t.id }}/delete"
+          data-confirm="Tag „{{ t.name }}“ löschen?{% if usage.get(t.id) %} Es wird von {{ usage[t.id] }} Buchung(en) entfernt.{% endif %}">
+      <button class="btn danger" type="submit" aria-label="Löschen">✕</button>
+    </form>
+    <small class="row-sub">{{ usage.get(t.id, 0) }} Buchung(en)</small>
+    {{ err(errors, t.id|string) }}
+  </li>
+  {% else %}
+  <li class="empty">Noch keine Tags.</li>
+  {% endfor %}
+</ul>
+{% endblock %}

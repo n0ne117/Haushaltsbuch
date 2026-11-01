@@ -1,0 +1,10 @@
+{% from "macros.html" import entry_amount %}
+{% include "partials/quick_add.html" %}
+<div id="toast" class="toast" role="status" aria-live="polite" hx-swap-oob="true">
+  <div class="toast-body">
+    <span>Gespeichert: {{ entry_amount(entry) }}
+      {%- if entry.category %} · {{ entry.category.emoji }} {{ entry.category.name }}
+      {%- else %} · {{ entry.account.name }} → {{ entry.to_account.name }}{% endif %}</span>
+    <button type="button" hx-post="/entries/{{ entry.id }}/undo" hx-target="#toast" hx-swap="outerHTML">Rückgängig</button>
+  </div>
+</div>

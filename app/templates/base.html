@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f6f7f9" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#14161a" media="(prefers-color-scheme: dark)">
+  <meta name="htmx-config" content='{"responseHandling":[{"code":"204","swap":false},{"code":"[23]..","swap":true},{"code":"422","swap":true},{"code":"[45]..","swap":false,"error":true}]}'>
+  <title>{% block title %}Haushaltsbuch{% endblock %}</title>
+  <link rel="stylesheet" href="{{ static('app.css') }}">
+  <script src="{{ static('vendor/htmx.min.js') }}" defer></script>
+  {% block scripts %}{% endblock %}
+  <script src="{{ static('app.js') }}" defer></script>
+</head>
+<body>
+  <main class="page">
+    {% block content %}{% endblock %}
+  </main>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <nav class="tabbar">
+    <a href="/" {% if tab == "add" %}aria-current="page"{% endif %}>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Erfassen</a>
+    <a href="/entries" {% if tab == "entries" %}aria-current="page"{% endif %}>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg>Buchungen</a>
+    <a href="/stats" {% if tab == "stats" %}aria-current="page"{% endif %}>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V11M12 20V4M19 20v-6"/></svg>Statistik</a>
+    <a href="/settings" {% if tab == "settings" %}aria-current="page"{% endif %}>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>Einstellungen</a>
+  </nav>
+</body>
+</html>

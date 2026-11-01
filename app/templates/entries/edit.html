@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% from "macros.html" import back %}
+{% set tab = "entries" %}
+{% block title %}Buchung bearbeiten · Haushaltsbuch{% endblock %}
+{% block content %}
+{{ back("/entries", "Buchungen") }}
+<h1>Buchung bearbeiten</h1>
+{% with action="/entries/%d" % entry.id, edit=true %}
+  {% include "partials/quick_add.html" %}
+{% endwith %}
+<form method="post" action="/entries/{{ entry.id }}/delete" data-confirm="Diese Buchung wirklich löschen?">
+  <button class="btn danger block" type="submit">Löschen</button>
+</form>
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% from "macros.html" import back %}
+{% set tab = "settings" %}
+{% block title %}Buchungsregeln · Haushaltsbuch{% endblock %}
+{% block content %}
+{{ back("/settings", "Einstellungen") }}
+<h1>Buchungsregeln</h1>
+<div class="prose">
+  <h2>💳 Kreditkarte</h2>
+  <p>Jeden Kartenkauf als <strong>Ausgabe</strong> auf dem Konto buchen, von dem die Kreditkarte später abgebucht
+    wird (z. B. Girokonto), optional mit Tag <em>#Kreditkarte</em>.
+    Die monatliche Kreditkartenabrechnung am Kontoauszug wird <strong>nie</strong> gebucht – sonst wäre alles doppelt.</p>
+
+  <h2>💶 Bargeld</h2>
+  <p>Bankomat-Abhebung = <strong>Umbuchung</strong> Girokonto → Bargeld.
+    Barzahlungen = <strong>Ausgabe</strong> vom Konto „Bargeld“.</p>
+
+  <h2>📈 Aktien / Sparplan</h2>
+  <p>Kauf = <strong>Umbuchung</strong> Girokonto → Depot. Verkauf = <strong>Umbuchung</strong> Depot → Girokonto.
+    Dividenden = <strong>Einnahme</strong> (Kategorie „Kapitalerträge“) auf das Konto, das sie erhält.
+    Depotgebühren = <strong>Ausgabe</strong>.
+    Kurswerte werden nicht erfasst: der Depot-Saldo bedeutet „netto investiert“, nicht den aktuellen Wert.</p>
+
+  <h2>🤝 Geld zwischen Partnern</h2>
+  <p>Immer als <strong>Umbuchung</strong> zwischen den beiden Konten – nie als Einnahme oder Ausgabe.</p>
+
+  <h2>📊 Wie gerechnet wird</h2>
+  <ul>
+    <li><strong>Einnahmen</strong> = Summe aller Einnahmen.</li>
+    <li><strong>Ausgaben</strong> = Summe aller Ausgaben.</li>
+    <li><strong>Gespart</strong> = Umbuchungen auf Spar-/Depotkonten minus Umbuchungen von dort zurück auf andere Konten.</li>
+    <li><strong>Saldo</strong> = Einnahmen − Ausgaben − Gespart.</li>
+    <li>Umbuchungen zwischen normalen Konten (z. B. Bankomat) zählen nirgends.</li>
+  </ul>
+</div>
+{% endblock %}

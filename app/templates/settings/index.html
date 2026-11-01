@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% set tab = "settings" %}
+{% block title %}Einstellungen · Haushaltsbuch{% endblock %}
+{% block content %}
+<h1>Einstellungen</h1>
+<nav class="menu">
+  <a href="/settings/accounts">🏦 Konten</a>
+  <a href="/settings/categories">🗂️ Kategorien</a>
+  <a href="/settings/tags">🏷️ Tags</a>
+  <a href="/help">❓ Buchungsregeln</a>
+</nav>
+{% endblock %}

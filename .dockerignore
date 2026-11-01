@@ -1,0 +1,15 @@
+.git
+.githooks
+.venv
+.pytest_cache
+**/__pycache__
+data
+backups
+exports
+tests
+docs
+scripts
+*.db
+*.db-*
+.env*
+.personal-patterns

@@ -1,0 +1,13 @@
+{% macro err(errors, key) -%}
+  {% if errors.get(key) %}<p class="error">{{ errors[key] }}</p>{% endif %}
+{%- endmacro %}
+
+{% macro back(href, label) -%}
+  <a class="back" href="{{ href }}">‹ {{ label }}</a>
+{%- endmacro %}
+
+{% macro entry_amount(e) -%}
+  {%- if e.type == EntryType.expense -%}{{ e.amount_cents|money("−") }}
+  {%- elif e.type == EntryType.income -%}{{ e.amount_cents|money("+") }}
+  {%- else -%}{{ e.amount_cents|money }}{%- endif -%}
+{%- endmacro %}
