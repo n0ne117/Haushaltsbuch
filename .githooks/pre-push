@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# Re-checks every commit about to be pushed (catches anything committed with --no-verify).
+set -euo pipefail
+check="$(git rev-parse --show-toplevel)/scripts/check-personal-data.sh"
+
+while read -r _local_ref local_sha _remote_ref remote_sha; do
+  [[ $local_sha =~ ^0+$ ]] && continue            # branch deletion
+  if [[ $remote_sha =~ ^0+$ ]]; then
+    "$check" range "$local_sha" --not --remotes     # new branch: everything not yet on any remote
+  else
+    "$check" range "$remote_sha..$local_sha"
+  fi
+done

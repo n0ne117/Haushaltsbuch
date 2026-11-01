@@ -1,0 +1,49 @@
+# --- Personal data: never commit ------------------------------------------
+# Databases (incl. SQLite WAL/SHM/journal files) and backups
+*.db
+*.db-*
+*.sqlite
+*.sqlite3
+*.bak
+*.dump
+data/
+backups/
+
+# Exports (statements, Kreditansicht, CSV)
+exports/
+*.csv
+*.pdf
+*.xlsx
+*.xls
+*.ods
+
+# Local secrets / config
+.env
+.env.*
+!.env.example
+
+# Local blocklist for the personal-data hook (contains the real names itself)
+.personal-patterns
+
+# Claude Code local settings
+.claude/settings.local.json
+
+# --- Python ------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+*.egg-info/
+build/
+dist/
+
+# --- Editors / OS -----------------------------------------------------------
+.vscode/
+.idea/
+.DS_Store
+*.swp
