@@ -1,6 +1,7 @@
 services:
   haushaltsbuch:
-    build: .
+    image: ghcr.io/n0ne117/haushaltsbuch:latest  # or pin a version, e.g. :1.0.0
+    build: .  # only used with `docker compose up --build` from a checkout
     container_name: haushaltsbuch
     restart: unless-stopped
     ports:
