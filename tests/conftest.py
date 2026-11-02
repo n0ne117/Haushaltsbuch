@@ -11,6 +11,7 @@ from app.models import Account, Category, Tag
 def client(tmp_path, monkeypatch):
     monkeypatch.setenv("DATA_DIR", str(tmp_path))
     monkeypatch.delenv("DATABASE_URL", raising=False)
+    monkeypatch.setenv("BACKUP_ENABLED", "false")
     with TestClient(create_app()) as c:
         yield c
 

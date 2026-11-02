@@ -92,3 +92,8 @@ function init(root) {
 }
 
 htmx.onLoad(init);
+
+// PWA: cache static assets only (needs HTTPS or localhost; silently skipped otherwise).
+if ("serviceWorker" in navigator && window.isSecureContext) {
+  navigator.serviceWorker.register("/sw.js").catch(() => {});
+}

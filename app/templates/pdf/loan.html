@@ -1,0 +1,57 @@
+{% extends "pdf/base.html" %}
+{% set st = statement %}
+{% block title %}Haushaltsrechnung{% endblock %}
+{% block body %}
+<h1>Haushaltsrechnung</h1>
+<p class="meta">Monatsdurchschnitt über {{ n }} vollständige Monate: {{ period_label }}{% if filter_note %} · Filter: {{ filter_note }}{% endif %}</p>
+
+{% macro section(title, rows, total) %}
+<h2>{{ title }}</h2>
+<table>
+  <thead><tr><th>Kategorie</th><th class="num">Ø pro Monat</th><th class="num">Summe {{ n }} Monate</th></tr></thead>
+  <tbody>
+    {% for r in rows %}
+    <tr class="main"><td>{{ r.category.name }}</td><td class="num">{{ r.cents|per_month(n)|money }}</td><td class="num">{{ r.cents|money }}</td></tr>
+    {% for s in r.subs %}
+    <tr class="sub"><td>{{ s.category.name if s.category.id != r.category.id else "ohne Unterkategorie" }}</td>
+      <td class="num">{{ s.cents|per_month(n)|money }}</td><td class="num">{{ s.cents|money }}</td></tr>
+    {% endfor %}
+    {% else %}
+    <tr><td class="muted" colspan="3">Keine</td></tr>
+    {% endfor %}
+    <tr class="total"><td>Summe {{ title }}</td><td class="num">{{ total|per_month(n)|money }}</td><td class="num">{{ total|money }}</td></tr>
+  </tbody>
+</table>
+{% endmacro %}
+
+{{ section("Einnahmen", st.income, st.totals.einnahmen) }}
+{{ section("Ausgaben", st.expense, st.totals.ausgaben) }}
+
+<h2>Gespart</h2>
+<table>
+  <thead><tr><th>Konto</th><th class="num">Ø pro Monat</th><th class="num">Summe {{ n }} Monate</th></tr></thead>
+  <tbody>
+    {% for acc, cents in st.gespart %}
+    <tr><td>{{ acc.name }}</td><td class="num">{{ cents|per_month(n)|money_signed(false) }}</td><td class="num">{{ cents|money_signed(false) }}</td></tr>
+    {% else %}
+    <tr><td class="muted" colspan="3">Keine</td></tr>
+    {% endfor %}
+    <tr class="total"><td>Summe Gespart</td><td class="num">{{ st.totals.gespart|per_month(n)|money_signed(false) }}</td><td class="num">{{ st.totals.gespart|money_signed(false) }}</td></tr>
+  </tbody>
+</table>
+
+<h2>Zusammenfassung</h2>
+<table>
+  <thead><tr><th></th><th class="num">Ø pro Monat</th><th class="num">Summe {{ n }} Monate</th></tr></thead>
+  <tbody>
+    {% for key, label in [("einnahmen", "Einnahmen"), ("ausgaben", "Ausgaben"), ("gespart", "Gespart")] %}
+    <tr><td>{{ label }}</td><td class="num">{{ st.totals[key]|per_month(n)|money_signed(false) }}</td><td class="num">{{ st.totals[key]|money_signed(false) }}</td></tr>
+    {% endfor %}
+    <tr class="total"><td>Frei verfügbar (Saldo)</td><td class="num">{{ st.totals.saldo|per_month(n)|money_signed(false) }}</td><td class="num">{{ st.totals.saldo|money_signed(false) }}</td></tr>
+  </tbody>
+</table>
+
+<p class="note">Einnahmen und Ausgaben aus dem Haushaltsbuch. Umbuchungen zwischen eigenen Konten (z. B. Bargeldabhebungen)
+  sind nicht enthalten. „Gespart“ = Einzahlungen auf Spar-/Depotkonten abzüglich Entnahmen.
+  Saldo = Einnahmen − Ausgaben − Gespart.</p>
+{% endblock %}

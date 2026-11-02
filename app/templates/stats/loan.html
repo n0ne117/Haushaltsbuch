@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% set tab = "stats" %}
+{% block title %}Kreditansicht · Haushaltsbuch{% endblock %}
+{% block content %}
+{% include "stats/_header.html" %}
+{% set st = statement %}
+
+<p class="hint">{{ period_label }} · Monatsdurchschnitt über {{ n }} vollständige Monate.
+  Grundlage für die Haushaltsrechnung der Bank.</p>
+
+{% macro section(title, rows, cls) %}
+<h2>{{ title }}</h2>
+<div class="loan">
+  <div class="loan-row loan-head"><span>Kategorie</span><span>Ø / Monat</span><span>Summe</span></div>
+  {% for r in rows %}
+    {% if r.subs %}
+    <details class="loan-group">
+      <summary class="loan-row">
+        <span>{{ r.category.emoji }} {{ r.category.name }}</span>
+        <span class="{{ cls }}">{{ r.cents|per_month(n)|money }}</span><span>{{ r.cents|money }}</span>
+      </summary>
+      {% for s in r.subs %}
+      <div class="loan-row loan-sub">
+        <span>{{ s.category.name if s.category.id != r.category.id else "Ohne Unterkategorie" }}</span>
+        <span>{{ s.cents|per_month(n)|money }}</span><span>{{ s.cents|money }}</span>
+      </div>
+      {% endfor %}
+    </details>
+    {% else %}
+    <div class="loan-row">
+      <span>{{ r.category.emoji }} {{ r.category.name }}</span>
+      <span class="{{ cls }}">{{ r.cents|per_month(n)|money }}</span><span>{{ r.cents|money }}</span>
+    </div>
+    {% endif %}
+  {% else %}
+    <div class="loan-row"><span class="row-sub">Keine</span><span></span><span></span></div>
+  {% endfor %}
+</div>
+{% endmacro %}
+
+{{ section("Einnahmen", st.income, "income") }}
+{{ section("Ausgaben", st.expense, "expense") }}
+
+<h2>Gespart</h2>
+<div class="loan">
+  <div class="loan-row loan-head"><span>Konto</span><span>Ø / Monat</span><span>Summe</span></div>
+  {% for acc, cents in st.gespart %}
+  <div class="loan-row"><span>{{ acc.name }}</span><span class="saved">{{ cents|per_month(n)|money_signed(false) }}</span><span>{{ cents|money_signed(false) }}</span></div>
+  {% else %}
+  <div class="loan-row"><span class="row-sub">Keine</span><span></span><span></span></div>
+  {% endfor %}
+</div>
+
+<h2>Summen</h2>
+<div class="loan">
+  <div class="loan-row loan-head"><span></span><span>Ø / Monat</span><span>Summe</span></div>
+  {% for key, label, cls in [("einnahmen", "Einnahmen", "income"), ("ausgaben", "Ausgaben", "expense"),
+                             ("gespart", "Gespart", "saved"), ("saldo", "Saldo", "")] %}
+  <div class="loan-row {% if key == 'saldo' %}loan-total{% endif %}">
+    <span>{{ label }}</span>
+    <span class="{{ cls }}">{{ st.totals[key]|per_month(n)|money_signed(false) }}</span>
+    <span>{{ st.totals[key]|money_signed(false) }}</span>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

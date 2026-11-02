@@ -145,3 +145,20 @@ def test_edit_and_delete_entry(client, db, seed):
     db.expunge_all()
     assert db.get(Entry, e.id) is None
     assert client.get(f"/entries/{e.id}").status_code == 404
+
+
+def test_pwa_manifest_and_service_worker(client):
+    page = client.get("/").text
+    manifest_url = re.search(r'rel="manifest" href="([^"]+)"', page).group(1)
+    r = client.get(manifest_url)
+    assert r.headers["content-type"].startswith("application/manifest+json")
+    manifest = r.json()
+    assert manifest["display"] == "standalone" and manifest["start_url"] == "/"
+    for icon in manifest["icons"]:
+        assert client.get(icon["src"]).headers["content-type"] == "image/png"
+
+    sw = client.get("/sw.js")
+    assert sw.headers["content-type"].startswith("text/javascript")
+    assert sw.headers["cache-control"] == "no-cache"
+    assert "/static/app.css?v=" in sw.text and "/static/vendor/chart.umd.min.js?v=" in sw.text
+    assert 'startsWith("/static/")' in sw.text  # pages and writes are never cached

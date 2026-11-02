@@ -7,6 +7,12 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     DATA_DIR=/data \
     TZ=Europe/Vienna
 
+# WeasyPrint (PDF export) needs Pango/HarfBuzz and a font.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        libpango-1.0-0 libpangoft2-1.0-0 libharfbuzz-subset0 fonts-dejavu-core \
+    && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 COPY requirements.txt .
 RUN pip install -r requirements.txt

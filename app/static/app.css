@@ -63,7 +63,8 @@ small, .hint, .row-sub { color: var(--muted); }
 
 /* --- Form controls --------------------------------------------------------- */
 input, select, textarea, button { font: inherit; color: inherit; }
-input[type="text"], input[type="search"], input[type="date"], input:not([type]), select {
+input[type="text"], input[type="search"], input[type="date"], input[type="month"], input[type="number"],
+input:not([type]), select {
   width: 100%;
   min-height: 44px;
   padding: 8px 12px;
@@ -277,6 +278,34 @@ legend { padding: 0; font-size: 0.9rem; color: var(--muted); }
 .month-table th, .month-table td { padding: 8px 6px; text-align: right; white-space: nowrap; border-bottom: 1px solid var(--border); }
 .month-table th:first-child { text-align: left; }
 .month-table thead th { color: var(--muted); font-weight: 500; }
+
+/* --- Kreditansicht & export ----------------------------------------------- */
+.view-title { margin: 16px 0 4px; font-size: 1.3rem; }
+.pdf-link { display: inline-block; margin: 8px 0 0; }
+.loan { background: var(--surface); border-radius: var(--radius); overflow: hidden; }
+.loan-row {
+  display: grid; grid-template-columns: 1fr auto auto; gap: 8px; align-items: baseline;
+  padding: 10px 10px; border-bottom: 1px solid var(--border); font-variant-numeric: tabular-nums;
+  font-size: 0.9rem;
+}
+.loan-row > span:not(:first-child) { text-align: right; white-space: nowrap; min-width: 72px; }
+.loan-row > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.loan > :last-child, .loan-group:last-child > :last-child { border-bottom: 0; }
+.loan-head { font-size: 0.8rem; color: var(--muted); padding-top: 8px; padding-bottom: 6px; }
+.loan-group > summary { cursor: pointer; list-style: none; }
+.loan-group > summary::-webkit-details-marker { display: none; }
+.loan-group > summary > span:first-child::after { content: " ▸"; color: var(--muted); }
+.loan-group[open] > summary > span:first-child::after { content: " ▾"; }
+.loan-sub { background: var(--surface-2); font-size: 0.9rem; }
+.loan-sub > span:first-child { padding-left: 18px; }
+.loan-total { font-weight: 700; }
+.loan .income { color: var(--income); }
+.loan .expense { color: var(--expense); }
+.loan .saved { color: var(--saved); }
+
+.backup-status { padding: 4px 16px; }
+.backup-status p { margin: 10px 0; }
+.backup-status .row-sub { white-space: normal; }
 
 /* --- Toast & tab bar --------------------------------------------------------- */
 .toast {

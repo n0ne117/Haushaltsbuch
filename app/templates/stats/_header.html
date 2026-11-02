@@ -3,19 +3,30 @@
   <a href="{{ url('/stats/month') }}" {% if view_name == "month" %}aria-current="page"{% endif %}>Monat</a>
   <a href="{{ url('/stats/year') }}" {% if view_name == "year" %}aria-current="page"{% endif %}>Jahr</a>
   <a href="{{ url('/stats/day') }}" {% if view_name == "day" %}aria-current="page"{% endif %}>Tag</a>
+  <a href="{{ url('/stats/loan') }}" {% if view_name == "loan" %}aria-current="page"{% endif %}>Kredit</a>
 </nav>
 
+{% if prev_url %}
 <div class="period-switch" data-swipe-prev="{{ prev_url }}" data-swipe-next="{{ next_url }}">
   <a class="icon-btn" href="{{ prev_url }}" rel="prev" aria-label="Zurück">‹</a>
   <h1>{{ title }}</h1>
   <a class="icon-btn" href="{{ next_url }}" rel="next" aria-label="Weiter">›</a>
 </div>
+{% else %}
+<h1 class="view-title">{{ title }}</h1>
+{% endif %}
 
 <form class="filters" method="get" data-autosubmit>
-  {% for k, v in period.items() if not (view_name == "day" and k == "d") %}<input type="hidden" name="{{ k }}" value="{{ v }}">{% endfor %}
+  {% for k, v in period.items() if not (view_name == "day" and k == "d") and not (view_name == "loan" and k == "n") %}<input type="hidden" name="{{ k }}" value="{{ v }}">{% endfor %}
   <input type="hidden" name="kind" value="{{ kind }}">
   {% if view_name == "day" %}
   <label class="field">Datum <input type="date" name="d" value="{{ day.isoformat() }}"></label>
+  {% elif view_name == "loan" %}
+  <label class="field">Zeitraum
+    <select name="n">
+      {% for c in choices %}<option value="{{ c }}" {% if c == n %}selected{% endif %}>Letzte {{ c }} vollständige Monate</option>{% endfor %}
+    </select>
+  </label>
   {% endif %}
   <details {% if filters.active %}open{% endif %}>
     <summary>Filter{% if filters.active %} · aktiv{% endif %}</summary>
@@ -26,3 +37,4 @@
     <noscript><button class="btn" type="submit">Anwenden</button></noscript>
   </details>
 </form>
+{% if pdf_url %}<a class="pdf-link" href="{{ pdf_url }}">PDF-Auszug</a>{% endif %}

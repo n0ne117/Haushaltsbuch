@@ -5,3 +5,4 @@ alembic==1.20.1
 Jinja2==3.1.6
 python-multipart==0.0.33
 tzdata==2026.6
+weasyprint==70.0

@@ -2,6 +2,7 @@
 
 import re
 from datetime import date, datetime
+from decimal import ROUND_HALF_UP, Decimal
 
 from app.config import TZ
 
@@ -62,6 +63,15 @@ def money(cents: int, sign: str = "") -> str:
 def money_signed(cents: int, plus: bool = True) -> str:
     """Negative values get '−'; positive get '+' when `plus` (for deltas)."""
     return money(cents, "−" if cents < 0 else ("+" if plus and cents > 0 else ""))
+
+
+def per_month(cents: int, months: int) -> int:
+    """Monthly average in cents, rounded half up."""
+    return int((Decimal(cents) / months).quantize(Decimal(1), ROUND_HALF_UP))
+
+
+def month_label(d: date) -> str:
+    return f"{MONTHS[d.month - 1]} {d.year}"
 
 
 def percent(value: float) -> str:

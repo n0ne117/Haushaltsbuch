@@ -33,12 +33,20 @@ class View:
             "url": self.url,
         }
 
+    def filter_note(self) -> str:
+        """Human-readable description of the active filters (for PDFs)."""
+        accounts = [a.name for a in self.context["accounts"] if a.id in self.filters.account_ids]
+        tags = [f"#{t.name}" for t in self.context["tags"] if t.id in self.filters.tag_ids]
+        parts = ([f"Konten: {', '.join(accounts)}"] if accounts else []) + (
+            [f"Tags: {', '.join(tags)}"] if tags else [])
+        return " · ".join(parts)
+
     def url(self, path: str, **params) -> str:
         items = [(k, str(v)) for k, v in params.items() if v is not None] + self.filters.params()
         return f"{path}?{urlencode(items)}" if items else path
 
 
-def _parse_month(value: str | None) -> tuple[int, int]:
+def parse_month(value: str | None) -> tuple[int, int]:
     try:
         y, m = (int(p) for p in (value or "").split("-"))
         if 1900 < y < 3000 and 1 <= m <= 12:
@@ -49,8 +57,13 @@ def _parse_month(value: str | None) -> tuple[int, int]:
     return t.year, t.month
 
 
-def _parse_year(value: str | None) -> int:
+def parse_year(value: str | None) -> int:
     return int(value) if value and value.isdigit() and 1900 < int(value) < 3000 else fmt.today().year
+
+
+def parse_months(value: str | None) -> int:
+    """Kreditansicht period length: 1–36 complete months, default 6."""
+    return int(value) if value and value.isdigit() and 1 <= int(value) <= 36 else 6
 
 
 def _parse_day(value: str | None) -> date:
@@ -60,7 +73,7 @@ def _parse_day(value: str | None) -> date:
         return fmt.today()
 
 
-def _month_key(y: int, m: int) -> str:
+def month_key(y: int, m: int) -> str:
     return f"{y:04d}-{m:02d}"
 
 
@@ -81,13 +94,13 @@ def index(request: Request):
 @router.get("/month")
 def month(request: Request, db: Session = Depends(get_db)):
     view = View(request, db)
-    y, m = _parse_month(request.query_params.get("m"))
+    y, m = parse_month(request.query_params.get("m"))
     start, end = stats.month_range(y, m)
     current = stats.totals(db, start, end, view.filters)
     prev_y, prev_m = stats.shift_month(y, m, -1)
     previous = stats.totals(db, *stats.month_range(prev_y, prev_m), view.filters)
     shares = stats.by_main_category(db, start, end, view.filters, view.kind)
-    key = _month_key(y, m)
+    key = month_key(y, m)
 
     def drill(c: Category) -> str:
         return view.url(f"/stats/category/{c.id}", m=key)
@@ -96,8 +109,8 @@ def month(request: Request, db: Session = Depends(get_db)):
         request, "stats/month.html",
         view_name="month",
         title=f"{fmt.MONTHS[m - 1]} {y}",
-        prev_url=view.url("/stats/month", m=_month_key(prev_y, prev_m), kind=view.kind.value),
-        next_url=view.url("/stats/month", m=_month_key(*stats.shift_month(y, m, 1)), kind=view.kind.value),
+        prev_url=view.url("/stats/month", m=month_key(prev_y, prev_m), kind=view.kind.value),
+        next_url=view.url("/stats/month", m=month_key(*stats.shift_month(y, m, 1)), kind=view.kind.value),
         period={"m": key},
         totals=current,
         delta=current - previous,
@@ -106,6 +119,7 @@ def month(request: Request, db: Session = Depends(get_db)):
         drill=drill,
         chart=_donut(view, shares, drill),
         kind_urls={k: view.url("/stats/month", m=key, kind=k) for k in ("expense", "income")},
+        pdf_url=view.url("/export/month.pdf", m=key),
         **view.context,
     )
 
@@ -113,7 +127,7 @@ def month(request: Request, db: Session = Depends(get_db)):
 @router.get("/year")
 def year(request: Request, db: Session = Depends(get_db)):
     view = View(request, db)
-    y = _parse_year(request.query_params.get("y"))
+    y = parse_year(request.query_params.get("y"))
     months = stats.monthly_totals(db, y, view.filters)
     total = sum(months, stats.Totals())
     start, end = date(y, 1, 1), date(y + 1, 1, 1)
@@ -132,18 +146,19 @@ def year(request: Request, db: Session = Depends(get_db)):
         totals=total,
         months=months,
         month_names=MONTHS_SHORT,
-        month_urls=[view.url("/stats/month", m=_month_key(y, i)) for i in range(1, 13)],
+        month_urls=[view.url("/stats/month", m=month_key(y, i)) for i in range(1, 13)],
         bars={
             "labels": MONTHS_SHORT,
             "einnahmen": [t.einnahmen for t in months],
             "ausgaben": [t.ausgaben for t in months],
             "gespart": [t.gespart for t in months],
-            "links": [view.url("/stats/month", m=_month_key(y, i)) for i in range(1, 13)],
+            "links": [view.url("/stats/month", m=month_key(y, i)) for i in range(1, 13)],
         },
         shares=shares,
         drill=drill,
         chart=_donut(view, shares, drill),
         kind_urls={k: view.url("/stats/year", y=y, kind=k) for k in ("expense", "income")},
+        pdf_url=view.url("/export/year.pdf", y=y),
         **view.context,
     )
 
@@ -176,13 +191,13 @@ def category(category_id: int, request: Request, db: Session = Depends(get_db)):
     main = cat.main
     qp = request.query_params
     if "y" in qp:
-        y = _parse_year(qp.get("y"))
+        y = parse_year(qp.get("y"))
         start, end = date(y, 1, 1), date(y + 1, 1, 1)
         period, label, back_url = {"y": y}, str(y), view.url("/stats/year", y=y, kind=main.type.value)
     else:
-        y, m = _parse_month(qp.get("m"))
+        y, m = parse_month(qp.get("m"))
         start, end = stats.month_range(y, m)
-        key = _month_key(y, m)
+        key = month_key(y, m)
         period, label = {"m": key}, f"{fmt.MONTHS[m - 1]} {y}"
         back_url = view.url("/stats/month", m=key, kind=main.type.value)
 
@@ -197,5 +212,27 @@ def category(category_id: int, request: Request, db: Session = Depends(get_db)):
         shares=subs,
         total=sum(s.cents for s in subs),
         entries=stats.entries(db, start, end, view.filters, ids),
+        **view.context,
+    )
+
+
+LOAN_CHOICES = [3, 6, 12, 24]
+
+
+@router.get("/loan")
+def loan(request: Request, db: Session = Depends(get_db)):
+    view = View(request, db)
+    n = parse_months(request.query_params.get("n"))
+    start, end = stats.loan_period(fmt.today(), n)
+    return render(
+        request, "stats/loan.html",
+        view_name="loan",
+        title="Kreditansicht",
+        period={"n": n},
+        n=n,
+        choices=sorted({*LOAN_CHOICES, n}),
+        period_label=f"{fmt.month_label(start)} – {fmt.month_label(end - timedelta(days=1))}",
+        statement=stats.statement(db, start, end, view.filters),
+        pdf_url=view.url("/export/loan.pdf", n=n),
         **view.context,
     )

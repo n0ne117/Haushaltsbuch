@@ -125,5 +125,70 @@ def entries(db: Session, start: date, end: date, f: EntryFilters, category_ids: 
     return list(db.scalars(stmt.order_by(Entry.date.desc(), Entry.id.desc())).unique())
 
 
-def next_day(d: date) -> date:
-    return d + timedelta(days=1)
+@dataclass
+class CategoryTotal:
+    """A main category's total with its subcategory split (empty if it has no subcategories)."""
+
+    category: Category
+    cents: int
+    subs: list[Share]
+
+
+def category_totals(db: Session, start: date, end: date, f: EntryFilters, kind: CategoryType
+                    ) -> list[CategoryTotal]:
+    return [
+        CategoryTotal(s.category, s.cents,
+                      by_subcategory(db, s.category, start, end, f) if s.category.children else [])
+        for s in by_main_category(db, start, end, f, kind)
+    ]
+
+
+def gespart_by_account(db: Session, start: date, end: date, f: EntryFilters) -> list[tuple[Account, int]]:
+    """Net amount saved per savings account (same rule as Totals.gespart)."""
+    src, dst = aliased(Account), aliased(Account)
+    savings = AccountKind.savings
+    base = (
+        select()
+        .select_from(Entry)
+        .join(src, Entry.account_id == src.id)
+        .join(dst, Entry.to_account_id == dst.id)
+        .where(Entry.type == EntryType.transfer, *_period(start, end, f))
+    )
+    net: dict[int, int] = {}
+    into = base.add_columns(dst.id, func.sum(Entry.amount_cents)).where(
+        dst.kind == savings, src.kind != savings).group_by(dst.id)
+    out = base.add_columns(src.id, func.sum(Entry.amount_cents)).where(
+        src.kind == savings, dst.kind != savings).group_by(src.id)
+    for acc_id, cents in db.execute(into):
+        net[acc_id] = net.get(acc_id, 0) + cents
+    for acc_id, cents in db.execute(out):
+        net[acc_id] = net.get(acc_id, 0) - cents
+    accounts = db.scalars(select(Account).where(Account.id.in_(net)).order_by(Account.sort_order, Account.name))
+    return [(a, net[a.id]) for a in accounts if net[a.id]]
+
+
+@dataclass
+class Statement:
+    start: date
+    end: date  # exclusive
+    totals: Totals
+    expense: list[CategoryTotal]
+    income: list[CategoryTotal]
+    gespart: list[tuple[Account, int]]
+
+
+def statement(db: Session, start: date, end: date, f: EntryFilters) -> Statement:
+    return Statement(
+        start, end,
+        totals(db, start, end, f),
+        category_totals(db, start, end, f, CategoryType.expense),
+        category_totals(db, start, end, f, CategoryType.income),
+        gespart_by_account(db, start, end, f),
+    )
+
+
+def loan_period(today: date, months: int) -> tuple[date, date]:
+    """The last `months` complete months before today's month: [start, end)."""
+    end = date(today.year, today.month, 1)
+    y, m = shift_month(today.year, today.month, -months)
+    return date(y, m, 1), end

@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% from "macros.html" import back %}
+{% set tab = "settings" %}
+{% block title %}Export & Backup · Haushaltsbuch{% endblock %}
+{% block content %}
+{{ back("/settings", "Einstellungen") }}
+<h1>Export &amp; Backup</h1>
+
+<h2>CSV (Excel)</h2>
+<form method="get" action="/export/entries.csv" class="stack">
+  <div class="row-fields">
+    <label class="field grow">Von <input type="date" name="from" value="{{ csv_from }}" required></label>
+    <label class="field grow">Bis <input type="date" name="to" value="{{ csv_to }}" required></label>
+  </div>
+  <button class="btn block" type="submit">CSV herunterladen</button>
+</form>
+
+<h2>PDF-Auszug</h2>
+<form method="get" action="/export/month.pdf" class="stack">
+  <label class="field">Monat <input type="month" name="m" value="{{ month }}" required></label>
+  <button class="btn block" type="submit">Monatsauszug als PDF</button>
+</form>
+<form method="get" action="/export/year.pdf" class="stack">
+  <label class="field">Jahr <input type="number" name="y" value="{{ year }}" min="2000" max="2999" inputmode="numeric" required></label>
+  <button class="btn block" type="submit">Jahresauszug als PDF</button>
+</form>
+<p class="hint">Gefilterte Auszüge (nach Konto oder Tag) gibt es über „PDF-Auszug“ in der Statistik.
+  Die Haushaltsrechnung für die Bank findest du unter <a href="/stats/loan">Statistik → Kredit</a>.</p>
+
+<h2>Backup</h2>
+<div class="list backup-status">
+  {% if not backup.enabled %}
+  <p class="error">Automatische Backups sind deaktiviert (BACKUP_ENABLED=false).</p>
+  {% endif %}
+  {% if backup.last_time %}
+  <p>Letztes Backup: <strong>{{ backup.last_time.strftime("%d.%m.%Y, %H:%M") }}</strong></p>
+  <p class="row-sub">{{ backup.last_file }} · {{ backup.count }} von max. {{ backup.keep }} Sicherungen</p>
+  {% else %}
+  <p>Noch kein Backup vorhanden.</p>
+  {% endif %}
+  {% if backup.error %}<p class="error">Letzter Fehler: {{ backup.error }}</p>{% endif %}
+  <p class="row-sub">Täglich um 03:00 nach <code>/data/backups/</code>.</p>
+</div>
+{% endblock %}

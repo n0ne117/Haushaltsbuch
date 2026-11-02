@@ -1,0 +1,88 @@
+{% extends "pdf/base.html" %}
+{% set st = statement %}
+{% block title %}{{ title }}{% endblock %}
+{% block body %}
+<h1>{{ title }}</h1>
+<p class="meta">{{ st.start|date_de }} – {{ last_day|date_de }}{% if filter_note %} · Filter: {{ filter_note }}{% endif %}</p>
+
+<table class="summary">
+  <tr>
+    {% for key, label in [("einnahmen", "Einnahmen"), ("ausgaben", "Ausgaben"), ("gespart", "Gespart"), ("saldo", "Saldo")] %}
+    <td><div class="label">{{ label }}</div><div class="value">{{ st.totals[key]|money_signed(false) }}</div></td>
+    {% endfor %}
+  </tr>
+</table>
+
+{% if months %}
+<h2>Monate</h2>
+<table>
+  <thead><tr><th>Monat</th><th class="num">Einnahmen</th><th class="num">Ausgaben</th><th class="num">Gespart</th><th class="num">Saldo</th></tr></thead>
+  <tbody>
+    {% for name, t in months %}
+    <tr><td>{{ name }}</td><td class="num">{{ t.einnahmen|money }}</td><td class="num">{{ t.ausgaben|money }}</td>
+      <td class="num">{{ t.gespart|money_signed(false) }}</td><td class="num">{{ t.saldo|money_signed(false) }}</td></tr>
+    {% endfor %}
+    <tr class="total"><td>Summe</td><td class="num">{{ st.totals.einnahmen|money }}</td><td class="num">{{ st.totals.ausgaben|money }}</td>
+      <td class="num">{{ st.totals.gespart|money_signed(false) }}</td><td class="num">{{ st.totals.saldo|money_signed(false) }}</td></tr>
+  </tbody>
+</table>
+{% endif %}
+
+{% macro categories(title, rows, total) %}
+<h2>{{ title }}</h2>
+{% if rows %}
+<table>
+  <thead><tr><th>Kategorie</th><th class="num">Betrag</th><th class="num">Anteil</th></tr></thead>
+  <tbody>
+    {% for r in rows %}
+    <tr class="main"><td>{{ r.category.name }}</td><td class="num">{{ r.cents|money }}</td>
+      <td class="num">{{ (r.cents * 100 / total)|percent }}</td></tr>
+    {% for s in r.subs %}
+    <tr class="sub"><td>{{ s.category.name if s.category.id != r.category.id else "ohne Unterkategorie" }}</td>
+      <td class="num">{{ s.cents|money }}</td><td></td></tr>
+    {% endfor %}
+    {% endfor %}
+    <tr class="total"><td>Summe</td><td class="num">{{ total|money }}</td><td></td></tr>
+  </tbody>
+</table>
+{% else %}
+<p class="muted">Keine.</p>
+{% endif %}
+{% endmacro %}
+
+{{ categories("Ausgaben nach Kategorie", st.expense, st.totals.ausgaben) }}
+{{ categories("Einnahmen nach Kategorie", st.income, st.totals.einnahmen) }}
+
+<h2>Gespart</h2>
+{% if st.gespart %}
+<table>
+  <thead><tr><th>Konto</th><th class="num">Netto eingezahlt</th></tr></thead>
+  <tbody>
+    {% for acc, cents in st.gespart %}<tr><td>{{ acc.name }}</td><td class="num">{{ cents|money_signed(false) }}</td></tr>{% endfor %}
+    <tr class="total"><td>Summe</td><td class="num">{{ st.totals.gespart|money_signed(false) }}</td></tr>
+  </tbody>
+</table>
+{% else %}
+<p class="muted">Keine.</p>
+{% endif %}
+
+<h2>Buchungen</h2>
+{% if entries %}
+<table>
+  <thead><tr><th>Datum</th><th>Kategorie / Umbuchung</th><th>Konto</th><th>Notiz</th><th class="num">Betrag</th></tr></thead>
+  <tbody>
+    {% for e in entries %}
+    <tr>
+      <td>{{ e.date|date_de }}</td>
+      <td>{% if e.category %}{{ e.category.label }}{% else %}Umbuchung → {{ e.to_account.name }}{% endif %}</td>
+      <td>{{ e.account.name }}</td>
+      <td>{{ e.note or "" }}{% for t in e.tags %} #{{ t.name }}{% endfor %}</td>
+      <td class="num">{% if e.type.value == "expense" %}{{ e.amount_cents|money("−") }}{% elif e.type.value == "income" %}{{ e.amount_cents|money("+") }}{% else %}{{ e.amount_cents|money }}{% endif %}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="muted">Keine Buchungen.</p>
+{% endif %}
+{% endblock %}

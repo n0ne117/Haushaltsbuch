@@ -8,6 +8,12 @@
   <meta name="theme-color" content="#14161a" media="(prefers-color-scheme: dark)">
   <meta name="htmx-config" content='{"responseHandling":[{"code":"204","swap":false},{"code":"[23]..","swap":true},{"code":"422","swap":true},{"code":"[45]..","swap":false,"error":true}]}'>
   <title>{% block title %}Haushaltsbuch{% endblock %}</title>
+  <link rel="manifest" href="{{ static('manifest.webmanifest') }}">
+  <link rel="icon" type="image/png" sizes="32x32" href="{{ static('icons/favicon-32.png') }}">
+  <link rel="apple-touch-icon" href="{{ static('icons/apple-touch-icon.png') }}">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Haushaltsbuch">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <link rel="stylesheet" href="{{ static('app.css') }}">
   <script src="{{ static('vendor/htmx.min.js') }}" defer></script>
   {% block scripts %}{% endblock %}

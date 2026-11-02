@@ -27,6 +27,16 @@ def entry_summary(e: Entry) -> str:
     return f"{fmt.money(e.amount_cents, sign)} · {where}"
 
 
+def static_assets() -> list[str]:
+    """Versioned URLs of every static file (precached by the service worker)."""
+    return sorted(static_url(p.relative_to(STATIC_DIR).as_posix())
+                  for p in STATIC_DIR.rglob("*") if p.is_file())
+
+
+def assets_version() -> str:
+    return hashlib.sha256("".join(static_assets()).encode()).hexdigest()[:12]
+
+
 templates.env.filters.update(
     money=fmt.money,
     money_signed=fmt.money_signed,
@@ -34,6 +44,8 @@ templates.env.filters.update(
     day_heading=fmt.day_heading,
     amount_input=fmt.amount_input,
     percent=fmt.percent,
+    per_month=fmt.per_month,
+    month_label=fmt.month_label,
 )
 templates.env.globals.update(
     static=static_url,

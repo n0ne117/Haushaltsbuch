@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>{% block title %}Haushaltsbuch{% endblock %}</title>
+<style>
+  @page {
+    size: A4;
+    margin: 18mm 16mm 20mm;
+    @bottom-left { content: "Haushaltsbuch · erstellt {{ generated.strftime('%d.%m.%Y %H:%M') }}"; font-family: "DejaVu Sans", "Liberation Sans", Arial, sans-serif; font-size: 7.5pt; color: #777; }
+    @bottom-right { content: "Seite " counter(page) " von " counter(pages); font-family: "DejaVu Sans", "Liberation Sans", Arial, sans-serif; font-size: 7.5pt; color: #777; }
+  }
+  body { font-family: "DejaVu Sans", "Liberation Sans", Arial, sans-serif; font-size: 9pt; color: #1a1a1a; }
+  h1 { font-size: 16pt; margin: 0 0 2pt; }
+  h2 { font-size: 11pt; margin: 16pt 0 5pt; padding-bottom: 2pt; border-bottom: 1.2pt solid #1a1a1a; }
+  .meta { color: #555; margin: 0 0 10pt; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 3pt 4pt; border-bottom: 0.5pt solid #d6d6d6; vertical-align: top; }
+  th { text-align: left; font-weight: bold; color: #444; }
+  .num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  tr.main td { font-weight: bold; }
+  tr.sub td:first-child { padding-left: 14pt; color: #444; }
+  tr.total td { font-weight: bold; border-top: 1pt solid #1a1a1a; border-bottom: none; }
+  thead { display: table-header-group; }
+  tr { page-break-inside: avoid; }
+  .summary td { width: 25%; border: none; padding: 0 4pt 0 0; }
+  .summary .label { color: #555; font-size: 8pt; }
+  .summary .value { font-size: 13pt; font-weight: bold; }
+  .muted { color: #777; }
+  .note { color: #555; font-size: 8pt; margin-top: 10pt; }
+</style>
+</head>
+<body>
+{% block body %}{% endblock %}
+</body>
+</html>
